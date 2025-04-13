@@ -10,6 +10,8 @@ import type { GetStaticPaths, GetStaticProps } from "next";
 import Error from "next/error";
 import { useRouter } from "next/router";
 import { PLASMIC } from "@/plasmic-init";
+import Script from "next/script";
+
 
 export default function PlasmicLoaderPage(props: {
   plasmicData?: ComponentRenderData;
@@ -17,6 +19,7 @@ export default function PlasmicLoaderPage(props: {
 }) {
   const { plasmicData, queryCache } = props;
   const router = useRouter();
+  const locale = router.locale ?? ""; // use the locale from the router
   if (!plasmicData || plasmicData.entryCompMetas.length === 0) {
     return <Error statusCode={404} />;
   }
@@ -29,7 +32,15 @@ export default function PlasmicLoaderPage(props: {
       pageRoute={pageMeta.path}
       pageParams={pageMeta.params}
       pageQuery={router.query}
+      globalVariants={[{ name: 'Locale', value: locale }]}
     >
+      <Script id="localize"
+        src="https://global.localizecdn.com/localize.js"
+        onLoad={() => {
+          !function(a){if(!a.Localize){a.Localize={};for(var e=["translate","untranslate","phrase","initialize","translatePage","setLanguage","getLanguage","getSourceLanguage","detectLanguage","getAvailableLanguages","untranslatePage","bootstrap","prefetch","on","off","hideWidget","showWidget"],t=0;t<e.length;t++)a.Localize[e[t]]=function(){}}}(window);
+          Localize.initialize({ key: 'L0lmDb7Tmcxg2',rememberLanguage: true, });
+        }}
+      />
       <PlasmicComponent component={pageMeta.displayName} />
     </PlasmicRootProvider>
   );
@@ -37,6 +48,7 @@ export default function PlasmicLoaderPage(props: {
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const { catchall } = context.params ?? {};
+  const locale = context.locale ?? ""; // Get the locale from the getStaticProps context
   const plasmicPath = typeof catchall === 'string' ? catchall : Array.isArray(catchall) ? `/${catchall.join('/')}` : '/';
   const plasmicData = await PLASMIC.maybeFetchComponentData(plasmicPath);
   if (!plasmicData) {
@@ -51,6 +63,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       prefetchedData={plasmicData}
       pageRoute={pageMeta.path}
       pageParams={pageMeta.params}
+      globalVariants={[{ name: 'Locale', value: locale }]}
     >
       <PlasmicComponent component={pageMeta.displayName} />
     </PlasmicRootProvider>
@@ -62,11 +75,14 @@ export const getStaticProps: GetStaticProps = async (context) => {
 export const getStaticPaths: GetStaticPaths = async () => {
   const pageModules = await PLASMIC.fetchPages();
   return {
-    paths: pageModules.map((mod) => ({
+    paths: ["en", "de"].flatMap((locale) => {
+      return pageModules.map((mod) => ({
       params: {
         catchall: mod.path.substring(1).split("/"),
       },
-    })),
-    fallback: "blocking",
+      locale,
+    }));
+  }),
+  fallback: "blocking",
   };
 }
