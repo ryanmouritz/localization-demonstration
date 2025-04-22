@@ -10,8 +10,6 @@ import type { GetStaticPaths, GetStaticProps } from "next";
 import Error from "next/error";
 import { useRouter } from "next/router";
 import { PLASMIC } from "@/plasmic-init";
-import Script from "next/script";
-
 
 export default function PlasmicLoaderPage(props: {
   plasmicData?: ComponentRenderData;
@@ -34,13 +32,6 @@ export default function PlasmicLoaderPage(props: {
       pageQuery={router.query}
       globalVariants={[{ name: 'Locale', value: locale }]}
     >
-      <Script id="localize"
-        src="https://global.localizecdn.com/localize.js"
-        onLoad={() => {
-          !function(a){if(!a.Localize){a.Localize={};for(var e=["translate","untranslate","phrase","initialize","translatePage","setLanguage","getLanguage","getSourceLanguage","detectLanguage","getAvailableLanguages","untranslatePage","bootstrap","prefetch","on","off","hideWidget","showWidget"],t=0;t<e.length;t++)a.Localize[e[t]]=function(){}}}(window);
-          Localize.initialize({ key: 'L0lmDb7Tmcxg2',rememberLanguage: true, });
-        }}
-      />
       <PlasmicComponent component={pageMeta.displayName} />
     </PlasmicRootProvider>
   );
